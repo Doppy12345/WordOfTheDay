@@ -3,10 +3,15 @@ import smtplib
 from email.message import EmailMessage
 from bs4 import BeautifulSoup
 
+
+# phoneCustomers is a list conatining phone numbers of recipiants
+# emailCustomers is a list containing emails of recipiants
+# alertBotEmail is the email adress (username / pass) that we are using to send these alerts
+from secrets import phoneCustomers, emailCustomers,alertBotEmail
+
 #Url and Other Globals
 URL = "https://www.merriam-webster.com/word-of-the-day"
 Page = requests.get(URL)
-customers = ["7345466552@txt.att.net"]
 wordOfTheDayPage = BeautifulSoup(Page.content, 'html.parser')
 
 
@@ -30,10 +35,9 @@ def scrapeWOTDP(page):
 
     return output
 
-def send_message(sender, recipiant, subject, body):
+def send_textAlert(sender, recipiant, subject, body):
     msg = EmailMessage()
     msg.set_content(body) 
-    # msg['subject'] = subject
     msg['to'] = recipiant
     msg['from'] = sender.username
 
@@ -44,9 +48,31 @@ def send_message(sender, recipiant, subject, body):
     
     server.quit()
 
+def send_emailAlert(sender, recipiant, subject, body):
+    msg = EmailMessage()
+    msg.set_content(body) 
+    msg['subject'] = subject
+    msg['to'] = recipiant
+    msg['from'] = sender.username
 
-alertBotEmail = emailLogin("wotd.alerts@gmail.com", "qovlryhgmbqiyeqt")
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login(sender.username, sender.password)
+    server.send_message(msg)
+    
+    server.quit()    
 
-for recipiant in customers:
-    # print(scrapeWOTDP(wordOfTheDayPage))
-    send_message(alertBotEmail, recipiant, "WOTD", scrapeWOTDP(wordOfTheDayPage)) 
+
+
+def send_WOTD():
+    for recipiant in phoneCustomers:
+        send_textAlert(alertBotEmail, recipiant, "WOTD", scrapeWOTDP(wordOfTheDayPage)) 
+
+    for recipiant in emailCustomers:    
+        send_emailAlert(alertBotEmail, recipiant, "WOTD", scrapeWOTDP(wordOfTheDayPage))
+
+
+
+    
+   
+    
