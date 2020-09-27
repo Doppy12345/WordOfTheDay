@@ -4,10 +4,7 @@ from email.message import EmailMessage
 from bs4 import BeautifulSoup
 
 
-# phoneCustomers is a list conatining phone numbers of recipiants
-# emailCustomers is a list containing emails of recipiants
-# alertBotEmail is the email adress (username / pass) that we are using to send these alerts
-from secrets import phoneCustomers, emailCustomers,alertBotEmail
+
 
 #Url and Other Globals
 URL = "https://www.merriam-webster.com/word-of-the-day"
@@ -19,6 +16,11 @@ class emailLogin:
     def __init__(self,username,password):
         self.username = username
         self.password = password
+
+# phoneCustomers is a list conatining phone numbers of recipiants
+# emailCustomers is a list containing emails of recipiants
+# alertBotEmail is the email adress (username / pass) that we are using to send these alerts
+from secrets import phoneCustomers, emailCustomers, alertBotEmail
 
 def scrapeWOTDP(page):
     wordOfDay = page.find('h1')
