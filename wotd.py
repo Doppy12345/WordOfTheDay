@@ -1,15 +1,9 @@
 import requests
 import smtplib
+from twilio.rest import Client
 from email.message import EmailMessage
 from bs4 import BeautifulSoup
 
-
-
-
-#Url and Other Globals
-URL = "https://www.merriam-webster.com/word-of-the-day"
-Page = requests.get(URL)
-wordOfTheDayPage = BeautifulSoup(Page.content, 'html.parser')
 
 
 class emailLogin:
@@ -20,35 +14,49 @@ class emailLogin:
 # phoneCustomers is a list conatining phone numbers of recipiants
 # emailCustomers is a list containing emails of recipiants
 # alertBotEmail is the email adress (username / pass) that we are using to send these alerts
-from secrets import phoneCustomers, emailCustomers, alertBotEmail
+from secrets import phoneCustomers, emailCustomers, alertBotEmail, alertBotPhoneNumber ,auth_token, account_sid
+
+#Url and Other Globals
+URL = "https://www.merriam-webster.com/word-of-the-day"
+Page = requests.get(URL)
+wordOfTheDayPage = BeautifulSoup(Page.content, 'html.parser')
+twilioClient = Client(account_sid, auth_token)
+
+
+
+
+
 
 def scrapeWOTDP(page):
+
+    "Looks at merriam websters word of the day page and retrieves word, defintion, part of speech and pronounciation"
+
     wordOfDay = page.find('h1')
     partOfSpeech = page.find('span', class_ = 'main-attr')
     pronounciation = page.find('span', class_ = 'word-syllables')
-    definition = page.find('p')
+    definitions = ""
+
+    for p in page.select("div.wod-definition-container > p"):
+            definitions += (p.text + "\n")
+    
+
 
     output = ("\n" +  "Word: " + (wordOfDay.text).upper() +  "\n" +
             (partOfSpeech.text).capitalize() + " | " + pronounciation.text +  "\n"  
-            "Definition" + definition.text
+            "Definition: \n" + definitions
             )
     
     
-
     return output
 
-def send_textAlert(sender, recipiant, subject, body):
-    msg = EmailMessage()
-    msg.set_content(body) 
-    msg['to'] = recipiant
-    msg['from'] = sender.username
+def send_textAlert(sender, recipiant, content):
 
-    server = smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-    server.login(sender.username, sender.password)
-    server.send_message(msg)
-    
-    server.quit()
+    twilioClient.messages.create(
+    to = recipiant,
+    from_ = sender,
+    body = content)
+
+
 
 def send_emailAlert(sender, recipiant, subject, body):
     msg = EmailMessage()
@@ -67,12 +75,12 @@ def send_emailAlert(sender, recipiant, subject, body):
 
 
 def send_WOTD():
-    for recipiant in phoneCustomers:
-        send_textAlert(alertBotEmail, recipiant, "WOTD", scrapeWOTDP(wordOfTheDayPage)) 
-
-    for recipiant in emailCustomers:    
-        send_emailAlert(alertBotEmail, recipiant, "WOTD", scrapeWOTDP(wordOfTheDayPage))
-
+    wotdContent = scrapeWOTDP(wordOfTheDayPage)
+    for phone in phoneCustomers:
+        send_textAlert(alertBotPhoneNumber,phone, wotdContent)
+    for email in emailCustomers:
+        send_emailAlert(alertBotEmail,email, "WOTD", wotdContent)
+    
 
 
     
