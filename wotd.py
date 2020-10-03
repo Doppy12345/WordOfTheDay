@@ -6,12 +6,6 @@ from email.message import EmailMessage
 from bs4 import BeautifulSoup
 
 
-
-class emailLogin:
-    def __init__(self,username,password):
-        self.username = username
-        self.password = password
-
 # phoneCustomers is a list conatining phone numbers of recipiants
 # emailCustomers is a list containing emails of recipiants
 # alertBotEmail is the email adress (username / pass) that we are using to send these alerts
@@ -28,7 +22,7 @@ twilioClient = Client(account_sid, auth_token)
 def archiveWord(word):
     todaysDate = datetime.today().strftime('%m-%d-%y')
     with open ('PastWord.txt', 'a') as f:
-        f.write(todaysDate + " : " + word.capitalize + "\n")
+        f.write(todaysDate + " : " + word.capitalize() + "\n")
     f.close()
 
 
@@ -38,6 +32,7 @@ def scrapeWOTDP(page):
     #Looks at merriam websters word of the day page and retrieves word, defintion, part of speech and pronounciation
 
     wordOfDay = (page.find('h1')).text
+    
 
     #save this word as an entry in a text file
     archiveWord(wordOfDay)
