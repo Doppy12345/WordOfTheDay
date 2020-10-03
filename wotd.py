@@ -1,5 +1,6 @@
 import requests
 import smtplib
+from datetime import datetime
 from twilio.rest import Client
 from email.message import EmailMessage
 from bs4 import BeautifulSoup
@@ -24,16 +25,25 @@ twilioClient = Client(account_sid, auth_token)
 
 
 
+def archiveWord(word):
+    todaysDate = datetime.today().strftime('%m-%d-%y')
+    with open ('PastWord.txt', 'a') as f:
+        f.write(todaysDate + " : " + word.capitalize + "\n")
+    f.close()
 
 
 
 def scrapeWOTDP(page):
 
-    "Looks at merriam websters word of the day page and retrieves word, defintion, part of speech and pronounciation"
+    #Looks at merriam websters word of the day page and retrieves word, defintion, part of speech and pronounciation
 
-    wordOfDay = page.find('h1')
-    partOfSpeech = page.find('span', class_ = 'main-attr')
-    pronounciation = page.find('span', class_ = 'word-syllables')
+    wordOfDay = (page.find('h1')).text
+
+    #save this word as an entry in a text file
+    archiveWord(wordOfDay)
+
+    partOfSpeech = (page.find('span', class_ = 'main-attr')).text
+    pronounciation = (page.find('span', class_ = 'word-syllables')).text
     definitions = ""
 
     for p in page.select("div.wod-definition-container > p"):
@@ -41,8 +51,8 @@ def scrapeWOTDP(page):
     
 
 
-    output = ("\n" +  "Word: " + (wordOfDay.text).upper() +  "\n" +
-            (partOfSpeech.text).capitalize() + " | " + pronounciation.text +  "\n"  
+    output = ("\n" +  "Word: " + (wordOfDay).upper() +  "\n" +
+            (partOfSpeech).capitalize() + " | " + pronounciation +  "\n"  
             "Definition: \n" + definitions
             )
     
@@ -74,12 +84,15 @@ def send_emailAlert(sender, recipiant, subject, body):
 
 
 
+
+
 def send_WOTD():
     wotdContent = scrapeWOTDP(wordOfTheDayPage)
     for phone in phoneCustomers:
         send_textAlert(alertBotPhoneNumber,phone, wotdContent)
     for email in emailCustomers:
         send_emailAlert(alertBotEmail,email, "WOTD", wotdContent)
+
     
 
 
